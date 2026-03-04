@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Happy Eighteen kak absensii 🎉</title>
+  <!-- Confetti Library -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <style>
+    /* ===== RESET & BASE ===== */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow-x: hidden;
+    }
+    body {
+      font-family: 'Fira Code', 'Courier New', monospace;
+      background: #0d1117;
+      color: #c9d1d9;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 15px;
+      line-height: 1.6;
+    }
+
+    /* ===== CONTAINER FULLSCREEN ===== */
+    .container {
+      width: 100%;
+      height: 100%;
+      max-height: 100vh;
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 0 25px rgba(88, 166, 255, 0.25);
+      position: relative;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    /* ===== MUSIC TOGGLE ===== */
+    .music-toggle {
+      position: fixed;
+      top: 15px;
+      right: 15px;
+      background: #21262d;
+      border: 1px solid #30363d;
+      color: #7ee787;
+      padding: 8px 15px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      z-index: 100;
+      transition: all 0.3s;
+    }
+    .music-toggle:hover { background: #30363d; }
+    .music-toggle.playing { color: #ffa657; }
+
+    /* ===== GLOW EFFECT & TYPOGRAPHY ===== */
+    .glow {
+      text-shadow: 0 0 10px rgba(121, 82, 179, 0.8), 
+                   0 0 20px rgba(56, 189, 248, 0.6);
+    }
+    h1 {
+      font-size: 2rem;
+      margin-bottom: 15px;
+      color: #7ee787;
+      text-align: center;
+    }
+    h2 {
+      font-size: 1.5rem;
+      margin: 20px 0 15px;
+      color: #58a6ff;
+    }
+    p { margin: 10px 0; }
+
+    /* ===== SECTION MANAGEMENT ===== */
+    .section { 
+      display: none; 
+      animation: fadeIn 0.5s ease;
+      width: 100%;
+      flex: 1;
+      display: none;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 10px;
+    }
+    .section.active { display: flex; }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ===== BUTTONS ===== */
+    .btn {
+      background: linear-gradient(135deg, #238636, #2ea043);
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      font-size: 1rem;
+      border-radius: 8px;
+      cursor: pointer;
+      margin: 15px 0;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      display: inline-block;
+    }
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(46, 160, 67, 0.4);
+    }
+    .btn:disabled {
+      background: #30363d;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* ===== QUIZ SECTION ===== */
+    .quiz-container {
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 10px;
+      padding: 20px;
+      margin: 15px 0;
+      width: 100%;
+      max-width: 600px;
+    }
+    .question {
+      font-size: 1.1rem;
+      margin-bottom: 15px;
+      color: #e6edf3;
+    }
+    .options {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+    }
+    .option-btn {
+      background: #21262d;
+      border: 1px solid #30363d;
+      color: #c9d1d9;
+      padding: 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      text-align: left;
+      transition: all 0.2s;
+    }
+    .option-btn:hover {
+      background: #30363d;
+      border-color: #58a6ff;
+    }
+    .option-btn.correct {
+      background: #238636;
+      border-color: #2ea043;
+      color: white;
+    }
+    .option-btn.wrong {
+      background: #da3633;
+      border-color: #f85149;
+      color: white;
+    }
+    .progress {
+      display: flex;
+      gap: 4px;
+      margin: 20px 0;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .progress-letter {
+      width: 30px;
+      height: 30px;
+      border: 1px solid #30363d;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      background: #0d1117;
+      color: #6e7681;
+      transition: all 0.3s;
+    }
+    .progress-letter.revealed {
+      background: linear-gradient(135deg, #8250df, #58a6ff);
+      color: white;
+      border-color: #7ee787;
+      transform: scale(1.1);
+    }
+
+    /* ===== BALLOON GAME ===== */
+    .balloon-container {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 10px;
+      margin: 20px 0;
+      min-height: 150px;
+      justify-content: center;
+    }
+    .balloon {
+      width: 40px;
+      height: 50px;
+      background: linear-gradient(135deg, #ff6b6b, #ffa502, #4facfe);
+      border-radius: 50% 50% 0 0;
+      position: relative;
+      cursor: pointer;
+      animation: float 2s ease-in-out infinite;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      color: white;
+      font-weight: bold;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    }
+    .balloon::after {
+      content: "";
+      position: absolute;
+      bottom: -15px;
+      width: 2px;
+      height: 20px;
+      background: #c9d1d9;
+    }
+    .balloon.pop {
+      animation: pop 0.3s ease forwards;
+    }
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+    @keyframes pop {
+      0% { transform: scale(1); opacity: 1; }
+      100% { transform: scale(1.5); opacity: 0; }
+    }
+    .counter {
+      text-align: center;
+      font-size: 1.3rem;
+      margin: 15px 0;
+      color: #7ee787;
+    }
+
+    /* ===== CAKE & CANDLE ===== */
+    .cake-container {
+      text-align: center;
+      margin: 30px 0;
+    }
+    .cake {
+      font-size: 4rem;
+      margin: 20px 0;
+      animation: bounce 1s ease infinite alternate;
+    }
+    @keyframes bounce {
+      from { transform: translateY(0); }
+      to { transform: translateY(-10px); }
+    }
+    .candle {
+      font-size: 2.5rem;
+      margin: 10px 0;
+      position: relative;
+    }
+    .flame {
+      position: absolute;
+      top: -25px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 1.8rem;
+      animation: flicker 0.1s infinite alternate;
+    }
+    @keyframes flicker {
+      from { opacity: 1; transform: translateX(-50%) scale(1); }
+      to { opacity: 0.9; transform: translateX(-50%) scale(1.05); }
+    }
+    .countdown {
+      font-size: 3rem;
+      font-weight: bold;
+      color: #ffa657;
+      text-align: center;
+      margin: 20px 0;
+      min-height: 60px;
+    }
+    .blow-area {
+      text-align: center;
+      margin: 20px 0;
+    }
+    .blow-btn {
+      background: linear-gradient(135deg, #d2a8ff, #a371f7);
+      padding: 15px 30px;
+      font-size: 1.2rem;
+    }
+
+    /* ===== FINAL LETTER ===== */
+    .letter {
+      background: #0d1117;
+      border-left: 4px solid #7ee787;
+      padding: 20px;
+      border-radius: 0 10px 10px 0;
+      margin: 20px 0;
+      white-space: pre-line;
+      font-size: 1.05rem;
+      width: 100%;
+      max-width: 650px;
+    }
+    .signature {
+      text-align: right;
+      margin-top: 20px;
+      font-style: italic;
+      color: #8b949e;
+    }
+
+    /* ===== UTILS ===== */
+    .hidden { display: none !important; }
+    .center { text-align: center; }
+    .vibrant { color: #7ee787; }
+    .highlight { 
+      background: linear-gradient(120deg, rgba(121,82,179,0.2), rgba(88,166,255,0.2));
+      padding: 3px 8px;
+      border-radius: 4px;
+    }
+
+    /* ===== CONFETTI CONTAINER ===== */
+    #confetti-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 999;
+    }
+
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 600px) {
+      .container { padding: 15px; border-radius: 8px; }
+      h1 { font-size: 1.6rem; }
+      h2 { font-size: 1.3rem; }
+      .balloon-container { grid-template-columns: repeat(5, 1fr); }
+      .cake { font-size: 3rem; }
+      .letter { font-size: 0.95rem; padding: 15px; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Confetti Canvas -->
+  <canvas id="confetti-canvas"></canvas>
+  
+  <!-- Music Toggle Button -->
+  <button class="music-toggle" id="musicToggle" onclick="toggleMusic()">
+    🔇 Musik: Off
+  </button>
+  
+  <!-- Background Music: Happy Birthday Instrumental (Traditional) -->
+  <audio id="bg-music" loop>
+    <source src="https://www.orangefreesounds.com/wp-content/uploads/2016/08/Happy-birthday-instrumental.mp3" type="audio/mpeg">
+  </audio>
+
+  <div class="container">
+    <!-- START SCREEN -->
+    <div id="start" class="section active center">
+      <h1 class="glow">🎉 Happy Eighteen kak absensii ✨</h1>
+      <p style="margin: 20px 0; color: #8b949e; max-width: 500px;">
+        Siap-siap! Ada kuis matematika seru, permainan balon, dan kejutan spesial buat kamu 🎈
+      </p>
+      <p style="font-size: 0.9rem; color: #6e7681; margin-bottom: 15px;">
+        💡 Klik tombol 🔇 di pojok kanan atas untuk nyalain musik Happy Birthday!
+      </p>
+      <button class="btn" onclick="startQuiz()">Mulai Petualangan! 🚀</button>
+    </div>
+
+    <!-- QUIZ SECTION -->
+    <div id="quiz" class="section">
+      <h2 class="glow">🧠 Kuis Matematika: Kumpulkan Huruf!</h2>
+      <p style="max-width: 500px; text-align: center;">Jawab soal berikut. Setiap jawaban benar akan membuka 1 huruf untuk membentuk ucapan spesial!</p>
+      
+      <div class="progress" id="progress"></div>
+      
+      <div class="quiz-container">
+        <p class="question" id="question">Loading soal...</p>
+        <div class="options" id="options"></div>
+      </div>
+      
+      <p id="feedback" style="min-height: 24px; margin: 10px 0; font-weight: 500;"></p>
+      <button class="btn" id="nextBtn" onclick="nextQuestion()" disabled>Lanjut ➡️</button>
+    </div>
+
+    <!-- BALLOON GAME -->
+    <div id="balloon-game" class="section center">
+      <h2 class="glow">🎈 Pecahin 18 Balon! 🎈</h2>
+      <p>Klik balon-balon di bawah sampai habis! Setiap pecah ada suaranya 🔊</p>
+      <div class="counter">Sisa: <span id="balloon-count">18</span> balon</div>
+      <div class="balloon-container" id="balloon-container"></div>
+      <button class="btn hidden" id="balloon-done" onclick="showCake()">Lanjut ke Kejutan! 🎂</button>
+    </div>
+
+    <!-- CAKE & CANDLE -->
+    <div id="cake-section" class="section center">
+      <h1 class="glow" style="font-size: 2.2rem;">🎉 18! 🎉</h1>
+      <p style="margin: 10px 0; color: #8b949e;">Selamat ulang tahun, kak absensii! 🥳</p>
+      
+      <div class="cake-container">
+        <div class="cake">🎂</div>
+        <div class="candle">
+          <span class="flame">🔥</span>
+          |
+        </div>
+      </div>
+      
+      <p style="margin: 20px 0; font-style: italic; color: #ffa657;">
+        "Sebelum tiup lilin... <span class="highlight">make a wish</span> dulu yuk! ✨"
+      </p>
+      
+      <div class="countdown" id="countdown"></div>
+      
+      <div class="blow-area">
+        <button class="btn blow-btn" id="blowBtn" onclick="startCountdown()">Tiup Lilin! 💨</button>
+      </div>
+    </div>
+
+    <!-- FINAL LETTER + CONFETTI -->
+    <div id="letter-section" class="section">
+      <h2 class="glow center">💌 Surat Terakhir dari Aku</h2>
+      <div class="letter">
+Hai kak absensii! 🎉
+
+Selamat ulang tahun yang ke-18! 🥳
+Semoga di usia yang baru ini, kamu makin pinter, makin berani, dan makin dekat sama mimpi-mimpi kamu (dapat UGM nya) ✨
+
+Terima kasih udah jadi temen yang asik, supportif, dan selalu bikin ketawa, paling inti sabar sih😄
+Semoga pertemanan kita tetap solid ke depannya, tanpa drama, dan full ketawa! 🤝
+
+Jangan lupa: hidup itu kayak kuis matematika — kadang susah, tapi kalau dijalani step by step, jawabannya pasti ketemu! 💪
+
+Sekali lagi: Happy Eighteen, hiblijii! 🎂🎈🎁
+Semoga tahun ini penuh kejutan baik, prestasi, dan momen-momen yang worth to remember! 🌟
+
+Salam hangat,
+<span class="signature">— Azizah ✨</span>
+      </div>
+      <div class="center">
+        <button class="btn" onclick="location.reload()">Ulangi Pengalaman 🔄</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- AUDIO: Balloon Pop Sound -->
+  <audio id="pop-sound" preload="auto">
+    <source src="https://www.soundjay.com/misc/sounds/balloon-pop-1.mp3" type="audio/mpeg">
+  </audio>
+
+  <script>
+    // ===== CONFETTI SETUP =====
+    const confettiCanvas = document.getElementById('confetti-canvas');
+    const confettiCtx = confettiCanvas.getContext('2d');
+    
+    function resizeCanvas() {
+      confettiCanvas.width = window.innerWidth;
+      confettiCanvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    function launchConfetti() {
+      confetti({
+        particleCount: 150,
+        angle: 60,
+        spread: 90,
+        origin: { x: 0, y: 0.8 },
+        colors: ['#7ee787', '#58a6ff', '#d2a8ff', '#ffa657', '#ff6b6b']
+      });
+      confetti({
+        particleCount: 150,
+        angle: 120,
+        spread: 90,
+        origin: { x: 1, y: 0.8 },
+        colors: ['#7ee787', '#58a6ff', '#d2a8ff', '#ffa657', '#ff6b6b']
+      });
+      
+      setTimeout(() => {
+        confetti({
+          particleCount: 80,
+          spread: 360,
+          origin: { y: 0.6 },
+          colors: ['#7ee787', '#58a6ff', '#d2a8ff']
+        });
+      }, 1000);
+    }
+
+    // ===== MUSIC TOGGLE =====
+    const bgMusic = document.getElementById('bg-music');
+    const musicToggle = document.getElementById('musicToggle');
+    let isMusicPlaying = false;
+    
+    function toggleMusic() {
+      if (isMusicPlaying) {
+        bgMusic.pause();
+        musicToggle.innerHTML = '🔇 Musik: Off';
+        musicToggle.classList.remove('playing');
+      } else {
+        bgMusic.volume = 0.5; // Volume 50%
+        bgMusic.play().then(() => {
+          musicToggle.innerHTML = '🔊 Musik: On 🎵';
+          musicToggle.classList.add('playing');
+        }).catch(e => {
+          console.log("Music play failed:", e);
+          musicToggle.innerHTML = '⚠️ Klik lagi untuk play';
+        });
+      }
+      isMusicPlaying = !isMusicPlaying;
+    }
+
+    // ===== AUDIO: Balloon Pop =====
+    const popSound = document.getElementById('pop-sound');
+    function playPop() {
+      popSound.currentTime = 0;
+      popSound.volume = 0.6;
+      popSound.play().catch(e => console.log("Pop sound failed:", e));
+    }
+
+    // ===== NAVIGASI SECTION =====
+    function showSection(id) {
+      document.querySelectorAll('.section').forEach(sec => {
+        sec.classList.remove('active');
+        sec.style.display = 'none';
+      });
+      const target = document.getElementById(id);
+      target.classList.add('active');
+      target.style.display = 'flex';
+    }
+
+    // ===== QUIZ DATA: 13 soal untuk H-A-P-P-Y  E-I-G-H-T-E-E-N =====
+    const quizData = [
+  { q: "2 + 2 = ?", options: ["4", "3", "5", "6"], answer: 0, letter: "H" },
+  { q: "√81 = ?", options: ["7", "8", "9", "10"], answer: 2, letter: "A" },
+  { q: "5 × 3 = ?", options: ["12", "13", "14", "15"], answer: 3, letter: "P" },
+  { q: "100 ÷ 25 = ?", options: ["2", "4", "3", "5"], answer: 1, letter: "P" },
+  { q: "7² = ?", options: ["42", "45", "49", "56"], answer: 2, letter: "Y" },
+  { q: "15 - 8 = ?", options: ["7", "5", "6", "8"], answer: 0, letter: "E" },
+  { q: "3³ = ?", options: ["18", "24", "30", "27"], answer: 3, letter: "I" },
+  { q: "12 + 9 = ?", options: ["19", "21", "20", "22"], answer: 1, letter: "G" },
+  { q: "6 × 4 = ?", options: ["20", "22", "24", "26"], answer: 2, letter: "H" },
+  { q: "50 ÷ 5 = ?", options: ["10", "8", "9", "11"], answer: 0, letter: "T" },
+  { q: "11 + 7 = ?", options: ["16", "17", "19", "18"], answer: 3, letter: "E" },
+  { q: "4! (faktorial) = ?", options: ["12", "24", "18", "32"], answer: 1, letter: "E" },
+  { q: "√144 = ?", options: ["10", "11", "12", "13"], answer: 2, letter: "N" }
+];
+
+    // ===== STATE GLOBAL =====
+    let currentQuestion = 0;
+    let revealedLetters = Array(13).fill(false);
+    const targetWord = "HAPPYEIGHTEEN";
+
+    // ===== QUIZ LOGIC =====
+    function startQuiz() {
+      const progress = document.getElementById('progress');
+      progress.innerHTML = '';
+      targetWord.split('').forEach((letter, i) => {
+        const el = document.createElement('div');
+        el.className = 'progress-letter';
+        el.id = `letter-${i}`;
+        el.textContent = letter;
+        progress.appendChild(el);
+      });
+      
+      currentQuestion = 0;
+      loadQuestion();
+      showSection('quiz');
+    }
+
+    function loadQuestion() {
+      const q = quizData[currentQuestion];
+      document.getElementById('question').textContent = `Soal ${currentQuestion+1}/13: ${q.q}`;
+      
+      const optionsEl = document.getElementById('options');
+      optionsEl.innerHTML = '';
+      
+      q.options.forEach((opt, idx) => {
+        const btn = document.createElement('button');
+        btn.className = 'option-btn';
+        btn.textContent = opt;
+        btn.onclick = () => checkAnswer(idx, btn);
+        optionsEl.appendChild(btn);
+      });
+      
+      document.getElementById('feedback').textContent = '';
+      document.getElementById('nextBtn').disabled = true;
+    }
+
+    function checkAnswer(selected, btnElement) {
+      document.querySelectorAll('.option-btn').forEach(btn => btn.disabled = true);
+      
+      const correct = quizData[currentQuestion].answer;
+      if (selected === correct) {
+        btnElement.classList.add('correct');
+        document.getElementById('feedback').textContent = "✅ Benar! Huruf terbuka ✨";
+        document.getElementById('feedback').style.color = "#7ee787";
+        
+        revealedLetters[currentQuestion] = true;
+        const letterEl = document.getElementById(`letter-${currentQuestion}`);
+        letterEl.classList.add('revealed');
+      } else {
+        btnElement.classList.add('wrong');
+        const buttons = document.querySelectorAll('.option-btn');
+        buttons[correct].classList.add('correct');
+        document.getElementById('feedback').textContent = "❌ Yuk, coba lagi di soal berikutnya!";
+        document.getElementById('feedback').style.color = "#ffa657";
+      }
+      
+      document.getElementById('nextBtn').disabled = false;
+    }
+
+    function nextQuestion() {
+      currentQuestion++;
+      if (currentQuestion < quizData.length) {
+        loadQuestion();
+      } else {
+        setTimeout(() => {
+          showSection('balloon-game');
+          initBalloons();
+        }, 800);
+      }
+    }
+
+    // ===== BALLOON GAME =====
+    let balloonsPopped = 0;
+    const totalBalloons = 18;
+    
+    function initBalloons() {
+      const container = document.getElementById('balloon-container');
+      container.innerHTML = '';
+      balloonsPopped = 0;
+      document.getElementById('balloon-count').textContent = totalBalloons;
+      document.getElementById('balloon-done').classList.add('hidden');
+      
+      for (let i = 0; i < totalBalloons; i++) {
+        const balloon = document.createElement('div');
+        balloon.className = 'balloon';
+        balloon.textContent = '🎈';
+        balloon.style.animationDelay = `${Math.random() * 2}s`;
+        balloon.onclick = function() {
+          if (this.classList.contains('pop')) return;
+          this.classList.add('pop');
+          playPop();
+          balloonsPopped++;
+          document.getElementById('balloon-count').textContent = totalBalloons - balloonsPopped;
+          
+          if (balloonsPopped >= totalBalloons) {
+            document.getElementById('balloon-done').classList.remove('hidden');
+          }
+        };
+        container.appendChild(balloon);
+      }
+    }
+
+    function showCake() {
+      showSection('cake-section');
+    }
+
+    // ===== CANDLE & COUNTDOWN =====
+    function startCountdown() {
+      const btn = document.getElementById('blowBtn');
+      btn.disabled = true;
+      btn.textContent = "Tunggu...";
+      
+      let count = 3;
+      const countdownEl = document.getElementById('countdown');
+      
+      const interval = setInterval(() => {
+        countdownEl.textContent = count;
+        count--;
+        if (count < 0) {
+          clearInterval(interval);
+          countdownEl.textContent = "💨";
+          document.querySelector('.flame').textContent = "💨";
+          
+          // 🎊 LAUNCH CONFETTI SAAT LILIN PADAM!
+          launchConfetti();
+          
+          setTimeout(() => {
+            showSection('letter-section');
+          }, 1500);
+        }
+      }, 1000);
+    }
+
+    // ===== INIT =====
+    window.addEventListener('load', () => {
+      popSound.load();
+    });
+  </script>
+</body>
+</html>
